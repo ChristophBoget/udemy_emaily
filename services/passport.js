@@ -6,14 +6,11 @@ const keys = require('../config/keys.js');
 const User = mongoose.model('users');
 
 passport.serializeUser((user, done) => {
-console.log('serializeUser', user);
   done(null, user.id);
 });
 
 passport.deserializeUser((id, done) => {
-console.log('deserializeUser', id, (typeof id));
   User.findById(id).then(user => {
-console.log('user', user);
     done(null, user);
   });
 });
@@ -25,15 +22,14 @@ passport.use(
     callbackURL: '/auth/google/callback'
   },
   (accessToken, refreshToken, profile, done) => {
-console.log('profile', profile);
     const googleId = profile._json.sub;
 
     User.findOne({id: googleId}).then((existingUser) => {
-console.log('existingUser', existingUser);
       if (existingUser) {
         done(null, existingUser);
       } else {
         const oUser = new User({
+          _id: googleId,
           id: googleId,
           fullName: profile._json.name,
           firstName: profile._json.given_name,
@@ -43,8 +39,10 @@ console.log('existingUser', existingUser);
           emailVerified: profile._json.email_verified,
           locale: profile._json.locale
         });
-console.log('newUser', oUser);
-        oUser.save().then((user) => {console.log('user', user); done(null, user);});
+
+        oUser.save().then((user) => {
+          done(null, user);}
+        );
       }
     }).catch(a => {
       console.log('caught error: ', a);
